@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hacker News Enhanced</title>
+    <style>
+        body {
+            font-family: Verdana, Geneva, sans-serif;
+            font-size: 10pt;
+            color: #828282;
+            margin: 0;
+            padding: 0;
+            background: #f6f6ef;
+        }
+        #hnmain {
+            width: 85%;
+            background-color: #f6f6ef;
+            margin: 0 auto;
+            padding: 10px 0;
+        }
+        .title a {
+            color: #000000;
+            text-decoration: none;
+        }
+        .subtext a {
+            color: #828282;
+            text-decoration: none;
+        }
+        .subtext a:hover {
+            text-decoration: underline;
+        }
+        .pagetop {
+            color: #222222;
+            line-height: 12px;
+        }
+        .votearrow {
+            width: 10px;
+            height: 10px;
+            border: 0;
+            margin: 3px 2px 6px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><path d="M0,10 L5,0 L10,10 Z" fill="%23828282"/></svg>');
+        }
+        .trending-box {
+            background: white;
+            border: 1px solid #ff6600;
+            margin: 10px 0;
+            padding: 8px;
+            font-size: 9pt;
+        }
+        .trending-item {
+            display: inline-block;
+            margin: 2px 4px;
+            padding: 2px 6px;
+            background: #f6f6ef;
+            border-radius: 3px;
+        }
+        .ai-button {
+            background: #ff6600;
+            color: white;
+            border: none;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 10pt;
+            cursor: pointer;
+            margin: 5px 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        td {
+            padding: 2px;
+        }
+        .morelink {
+            font-family: Verdana, Geneva, sans-serif;
+            font-size: 10pt;
+        }
+        .loading {
+            color: #828282;
+            font-style: italic;
+        }
+        .error {
+            color: #ff6600;
+            font-weight: bold;
+        }
+        .footer-search {
+            margin-top: 10px;
+        }
+        .footer-search input {
+            font-family: Verdana, Geneva, sans-serif;
+            font-size: 10pt;
+            padding: 2px;
+        }
+        .event-notice {
+            color: #ff6600;
+            margin: 5px 0;
+            font-weight: bold;
+        }
+        #comments-container {
+            margin-top: 10px;
+        }
+        .comment {
+            margin-bottom: 10px;
+            padding-left: 10px;
+            border-left: 2px solid #828282;
+        }
+        .comment-text {
+            margin-top: 5px;
+        }
+        .footer-links a {
+            color: #828282;
+            text-decoration: none;
+        }
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        /* New features styling */
+        .theme-switcher {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+        }
+        .dark-mode {
+            background-color: #222;
+            color: #ddd;
+        }
+        .dark-mode .title a {
+            color: #fff;
+        }
+        .dark-mode #hnmain {
+            background-color: #222;
+        }
+        .bookmark-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            color: #828282;
+        }
+        .bookmark-btn.bookmarked {
+            color: #ff6600;
+        }
+        .user-profile {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border: 1px solid #ff6600;
+            z-index: 100;
+        }
+        .close-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            cursor: pointer;
+        }
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+        }
+        .notification-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff6600;
+            color: white;
+            border-radius: 50%;
+            width: 15px;
+            height: 15px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .notifications-panel {
+            display: none;
+            position: fixed;
+            top: 40px;
+            right: 10px;
+            width: 300px;
+            background: white;
+            border: 1px solid #ff6600;
+            padding: 10px;
+            z-index: 99;
+        }
+        .upvoted .votearrow {
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><path d="M0,10 L5,0 L10,10 Z" fill="%23ff6600"/></svg>');
+        }
+        .save-story-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #828282;
+            font-size: 10pt;
+        }
+        .save-story-btn.saved {
+            color: #ff6600;
+        }
+    </style>
+</head>
+<body>
+    <div class="theme-switcher">
+        <button onclick="toggleDarkMode()">🌓</button>
+    </div>
+    
+    <div class="user-profile" id="user-profile">
+        <span class="close-btn" onclick="hideUserProfile()">✕</span>
+        <h3>User Profile</h3>
+        <div id="profile-content">
+            <p>Username: <span id="profile-username">guest</span></p>
+            <p>Karma: <span id="profile-karma">0</span></p>
+            <p>Member since: <span id="profile-created">today</span></p>
+            <h4>Saved Stories</h4>
+            <div id="saved-stories-list"></div>
+        </div>
+    </div>
+    
+    <div class="notifications-panel" id="notifications-panel">
+        <h4>Notifications</h4>
+        <div id="notifications-list">
+            <p>No new notifications</p>
+        </div>
+    </div>
+
+    <center>
+        <table id="hnmain" border="0" cellpadding="0" cellspacing="0">
+            <tr>
+                <td bgcolor="#ff6600">
+                    <table border="0" cellpadding="0" cellspacing="0" style="padding:2px">
+                        <tr>
+                            <td style="width:18px;padding-right:4px">
+                                <a href="#" onclick="loadTopStories()">
+                                    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18'><rect width='18' height='18' fill='%23ff6600'/><rect x='4' y='4' width='10' height='10' fill='white'/></svg>" 
+                                         width="18" height="18" style="border:1px white solid;">
+                                </a>
+                            </td>
+                            <td style="line-height:12pt">
+                                <span class="pagetop">
+                                    <b><a href="#" onclick="loadTopStories()">Hacker News</a></b>
+                                    <a href="#" onclick="loadNewStories()">new</a> | 
+                                    <a href="#" onclick="loadPastStories()">past</a> | 
+                                    <a href="#" onclick="loadCommentsPage()">comments</a> | 
+                                    <a href="#" onclick="loadAskStories()">ask</a> | 
+                                    <a href="#" onclick="loadShowStories()">show</a> | 
+                                    <a href="#" onclick="loadJobStories()">jobs</a> | 
+                                    <a href="#" onclick="showSubmitForm()">submit</a>
+                                </span>
+                            </td>
+                            <td style="text-align:right;padding-right:4px;">
+                                <span class="pagetop">
+                                    <span class="notification-bell" onclick="toggleNotifications()">🔔 <span class="notification-count" id="notification-count">0</span></span>
+                                    <a href="#" onclick="showUserProfile()">profile</a> | 
+                                    <a href="#" onclick="showLoginForm()">login</a>
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr style="height:10px"></tr>
+            <tr>
+                <td>
+                    <!-- AI Trending Box -->
+                    <div id="trending-box" class="trending-box" style="display:none">
+                        <strong>🔥 Trending Tech Topics:</strong><br>
+                        <div id="trending-list"></div>
+                        <button class="ai-button" onclick="hideTrending()">Hide</button>
+                    </div>
+                    
+                    <!-- Error Message -->
+                    <div id="error-message" class="error" style="display:none"></div>
+                    
+                    <!-- Submit Form -->
+                    <div id="submit-form" style="display:none; margin:10px 0; padding:10px; background:white;">
+                        <h3>Submit</h3>
+                        <form onsubmit="return false;">
+                            <table>
+                                <tr><td>Title:</td><td><input type="text" size="50" id="submit-title"></td></tr>
+                                <tr><td>URL:</td><td><input type="text" size="50" id="submit-url"></td></tr>
+                                <tr><td></td><td><small>or</small></td></tr>
+                                <tr><td>Text:</td><td><textarea id="submit-text" cols="49" rows="6"></textarea></td></tr>
+                                <tr><td></td><td><button onclick="submitPost()">Submit</button> <button onclick="hideSubmitForm()">Cancel</button></td></tr>
+                            </table>
+                        </form>
+                    </div>
+                    
+                    <!-- Login Form -->
+                    <div id="login-form" style="display:none; margin:10px 0; padding:10px; background:white;">
+                        <h3>Login</h3>
+                        <form onsubmit="return false;">
+                            <table>
+                                <tr><td>Username:</td><td><input type="text" size="20" id="login-username"></td></tr>
+                                <tr><td>Password:</td><td><input type="password" size="20" id="login-password"></td></tr>
+                                <tr><td></td><td><button onclick="performLogin()">Login</button> <button onclick="hideLoginForm()">Cancel</button></td></tr>
+                            </table>
+                        </form>
+                    </div>
+                    
+                    <!-- Stories Container -->
+                    <div id="stories-container"></div>
+                    
+                    <!-- Comments Container -->
+                    <div id="comments-container" style="display:none;"></div>
+                    
+                    <!-- More Button -->
+                    <div id="more-container">
+                        <a href="#" class="morelink" onclick="loadMoreStories()">More</a>
+                        <span id="loading" class="loading" style="display:none">Loading...</span>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                        <button class="ai-button" onclick="analyzeAndShowTrends()">
+                            ✨ Analyze Trending Topics
+                        </button>
+                        <button class="ai-button" onclick="loadSavedStories()">
+                            📚 View Saved Stories
+                        </button>
+                    </div>
+                    
+                    <table width="100%" cellspacing="0" cellpadding="1">
+                        <tr><td bgcolor="#ff6600"></td></tr>
+                    </table>
+                    <br>
+                    <center>
+                        <span class="footer-links">
+                            <a href="#" onclick="loadGuidelines()">Guidelines</a> | 
+                            <a href="#" onclick="loadFAQ()">FAQ</a> | 
+                            <a href="#" onclick="loadAPIInfo()">API</a> | 
+                            <a href="#" onclick="loadSecurityInfo()">Security</a> | 
+                            <a href="#" onclick="loadLegalInfo()">Legal</a> | 
+                            <a href="#" onclick="loadApplyToYC()">Apply to YC</a> | 
+                            <a href="#" onclick="showContactForm()">Contact</a>
+                        </span>
+                        <div class="event-notice">
+                            Join us for AI Startup School this June 16-17 in San Francisco!
+                        </div>
+                        <div class="footer-search">
+                            Search: <input type="text" size="20" placeholder="[tech]" id="search-input">
+                            <button onclick="performSearch()">Go</button>
+                        </div>
+                    </center>
+                </td>
+            </tr>
+        </table>
+    </center>
+
+    <script>
+        // State management
+        let currentStories = [];
+        let currentStoryIds = [];
+        let currentPage = 0;
+        const storiesPerPage = 10;
+        let currentView = 'top';
+        let currentComments = [];
+        let savedStories = JSON.parse(localStorage.getItem('savedStories')) || [];
+        let notifications = JSON.parse(localStorage.getItem('notifications')) || [];
+        let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        let darkMode = localStorage.getItem('darkMode') === 'true';
+        
+        // Initialize dark mode if enabled
+        if (darkMode) {
+            document.body.classList.add('dark-mode');
+        }
+        
+        // DOM elements
+        const storiesContainer = document.getElementById('stories-container');
+        const commentsContainer = document.getElementById('comments-container');
+        const loadingElement = document.getElementById('loading');
+        const errorElement = document.getElementById('error-message');
+        const trendingList = document.getElementById('trending-list');
+        const searchInput = document.getElementById('search-input');
+        const notificationCount = document.getElementById('notification-count');
+        
+        // HN API endpoints
+        const API_BASE = 'https://hacker-news.firebaseio.com/v0';
+        const TOP_STORIES = `${API_BASE}/topstories.json`;
+        const NEW_STORIES = `${API_BASE}/newstories.json`;
+        const PAST_STORIES = `${API_BASE}/beststories.json`;
+        const ASK_STORIES = `${API_BASE}/askstories.json`;
+        const SHOW_STORIES = `${API_BASE}/showstories.json`;
+        const JOB_STORIES = `${API_BASE}/jobstories.json`;
+        const ITEM_URL = `${API_BASE}/item/`;
+        
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTopStories();
+            updateNotificationCount();
+            updateLoginStatus();
+        });
+        
+        // Helper function to fetch data
+        async function fetchData(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok');
+                return await response.json();
+            } catch (error) {
+                showError(`Failed to load data: ${error.message}`);
+                return null;
+            }
+        }
+        
+        function showError(message) {
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            setTimeout(() => errorElement.style.display = 'none', 5000);
+        }
+        
+        // Clear the current view
+        function clearView() {
+            storiesContainer.innerHTML = '';
+            commentsContainer.innerHTML = '';
+            commentsContainer.style.display = 'none';
+            document.getElementById('submit-form').style.display = 'none';
+            document.getElementById('login-form').style.display = 'none';
+            currentPage = 0;
+            loadingElement.style.display = 'inline';
+            document.querySelector('.morelink').style.display = 'none';
+        }
+        
+        // Load top stories
+        async function loadTopStories() {
+            currentView = 'top';
+            clearView();
+            storiesContainer.style.display = 'block';
+            
+            const storyIds = await fetchData(TOP_STORIES);
+            if (!storyIds) return;
+            
+            currentStoryIds = storyIds;
+            await loadNextStories();
+        }
+        
+        // Load new stories
+        async function loadNewStories() {
+            currentView = 'new';
+            clearView();
+            storiesContainer.style.display = 'block';
+            
+            const storyIds = await fetchData(NEW_STORIES);
+            if (!storyIds) return;
+            
+            currentStoryIds = storyIds;
+            await loadNextStories();
+        }
+        
+        // Load past stories
+        async function loadPastStories() {
+            currentView = 'past';
+            clearView();
+            storiesContainer.style.display = 'block';
+            
+            const storyIds = await fetchData(PAST_STORIES);
+            if (!storyIds) return;
+            
+            currentStoryIds = storyIds;
+            await loadNextStories();
+        }
+        
+        // Load ask stories
+        async function loadAskStories() {
+            currentView = 'ask';
+            clearView();
+            storiesContainer.style.display = 'block';
+            
+            const storyIds = await fetchData(ASK_STORIES);
+            if (!storyIds) return;
+            
+            currentStoryIds = storyIds;
+            await loadNextStories();
+        }
+        
+        // Load show stories
+        async function loadShowStories() {
+            currentView = 'show';
+            clearView();
+            storiesContainer.style.display = 'block';
+            
+            const storyIds = await fetchData(SHOW_STORIES);
+            if (!storyIds) return;
+            
+            currentStoryIds = storyIds;
+            await loadNextStories();
+        }
+        
+        // Load job stories
+        async function loadJobStories() {
+            currentView = 'job';
+            clearView();
+            storiesContainer.style.display = 'block';
+            
+            const storyIds = await fetchData(JOB_STORIES);
+            if (!storyIds) return;
+            
+            currentStoryIds = storyIds;
+            await loadNextStories();
+        }
+        
+        // Load comments page
+        async function loadCommentsPage() {
+            currentView = 'comments';
+            clearView();
+            storiesContainer.style.display = 'none';
+            commentsContainer.style.display = 'block';
+            
+            // For demo purposes, we'll show some mock comments
+            currentComments = [
+                {
+                    id: 1,
+                    by: 'user1',
+                    text: 'This is a sample comment about the article.',
+                    time: Date.now() / 1000 - 3600,
+                    kids: [3]
+                },
+                {
+                    id: 2,
+                    by: 'user2',
+                    text: 'Another perspective on the topic being discussed.',
+                    time: Date.now() / 1000 - 1800,
+                    kids: []
+                },
+                {
+                    id: 3,
+                    by: 'user3',
+                    text: 'Replying to the first comment with additional thoughts.',
+                    time: Date.now() / 1000 - 900,
+                    kids: []
+                }
+            ];
+            
+            renderComments(currentComments);
+            loadingElement.style.display = 'none';
+        }
+        
+        // Load saved stories
+        async function loadSavedStories() {
+            if (savedStories.length === 0) {
+                showError("You haven't saved any stories yet.");
+                return;
+            }
+            
+            clearView();
+            storiesContainer.style.display = 'block';
+            
+            // Fetch all saved stories in parallel
+            const storyPromises = savedStories.map(id => fetchData(`${ITEM_URL}${id}.json`));
+            const stories = await Promise.all(storyPromises);
+            
+            // Filter out nulls and invalid stories
+            const validStories = stories.filter(story => story && story.title);
+            currentStories = validStories;
+            
+            // Render stories with saved indicator
+            validStories.forEach((story, idx) => {
+                const rank = idx + 1;
+                renderStory(story, rank, true);
+            });
+            
+            loadingElement.style.display = 'none';
+            document.querySelector('.morelink').style.display = 'none';
+        }
+        
+        // Render comments
+        function renderComments(comments, depth = 0) {
+            comments.forEach(comment => {
+                const commentElement = document.createElement('div');
+                commentElement.className = 'comment';
+                commentElement.style.marginLeft = `${depth * 20}px`;
+                
+                const timeAgo = getTimeAgo(comment.time);
+                
+                commentElement.innerHTML = `
+                    <div class="subtext">
+                        <a href="#/user/${comment.by}">${comment.by}</a> 
+                        <span class="age">${timeAgo}</span>
+                        <button class="bookmark-btn" onclick="toggleBookmark(${comment.id}, this)">★</button>
+                    </div>
+                    <div class="comment-text">${comment.text}</div>
+                `;
+                
+                commentsContainer.appendChild(commentElement);
+                
+                // Recursively render replies if they exist
+                if (comment.kids && comment.kids.length > 0) {
+                    const replies = comment.kids.map(id => 
+                        currentComments.find(c => c.id === id)
+                    ).filter(c => c);
+                    renderComments(replies, depth + 1);
+                }
+            });
+        }
+        
+        // Load more stories
+        async function loadMoreStories() {
+            loadingElement.style.display = 'inline';
+            await loadNextStories();
+        }
+        
+        // Load the next batch of stories
+        async function loadNextStories() {
+            const startIdx = currentPage * storiesPerPage;
+            const endIdx = startIdx + storiesPerPage;
+            const batchIds = currentStoryIds.slice(startIdx, endIdx);
+            
+            // Fetch all stories in parallel
+            const storyPromises = batchIds.map(id => fetchData(`${ITEM_URL}${id}.json`));
+            const stories = await Promise.all(storyPromises);
+            
+            // Filter out nulls and invalid stories
+            const validStories = stories.filter(story => story && story.title);
+            currentStories = [...currentStories, ...validStories];
+            
+            // Render stories
+            validStories.forEach((story, idx) => {
+                const rank = startIdx + idx + 1;
+                const isSaved = savedStories.includes(story.id);
+                renderStory(story, rank, isSaved);
+            });
+            
+            currentPage++;
+            loadingElement.style.display = 'none';
+            
+            // Show/hide More button
+            if (endIdx >= currentStoryIds.length) {
+                document.querySelector('.morelink').style.display = 'none';
+            } else {
+                document.querySelector('.morelink').style.display = 'inline';
+            }
+        }
+        
+        // Render a single story
+        function renderStory(story, rank, isSaved = false) {
+            const storyElement = document.createElement('table');
+            storyElement.className = 'story';
+            storyElement.style.width = '100%';
+            storyElement.style.borderCollapse = 'collapse';
+            storyElement.style.marginBottom = '5px';
+            
+            const hostname = story.url ? new URL(story.url).hostname.replace('www.', '') : '';
+            const timeAgo = getTimeAgo(story.time);
+            
+            storyElement.innerHTML = `
+                <tr class="athing">
+                    <td align="right" valign="top" width="5%"><span class="rank">${rank}.</span></td>
+                    <td valign="top" width="5%"><center><a href="#" onclick="upvoteStory(${story.id}, this)"><div class="votearrow"></div></a></center></td>
+                    <td class="title" width="90%">
+                        <a href="${story.url || `#/item/${story.id}`}" target="_blank">${story.title}</a>
+                        ${hostname ? `<span class="sitebit">(<a href="https://${hostname}" target="_blank">${hostname}</a>)</span>` : ''}
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2"></td>
+                    <td class="subtext">
+                        <span class="score">${story.score || 0} points</span> by <a href="#/user/${story.by}">${story.by}</a> 
+                        <span class="age">${timeAgo}</span> | 
+                        <a href="#" onclick="hideStory(${story.id})">hide</a> | 
+                        <a href="#" onclick="loadStoryComments(${story.id})">${story.descendants || 0} comments</a> |
+                        <button class="save-story-btn ${isSaved ? 'saved' : ''}" onclick="toggleSaveStory(${story.id}, this)">
+                            ${isSaved ? 'saved' : 'save'}
+                        </button>
+                    </td>
+                </tr>
+            `;
+            
+            storiesContainer.appendChild(storyElement);
+        }
+        
+        // Load comments for a specific story
+        async function loadStoryComments(storyId) {
+            clearView();
+            commentsContainer.style.display = 'block';
+            
+            const story = await fetchData(`${ITEM_URL}${storyId}.json`);
+            if (!story) return;
+            
+            // Render story at top
+            const storyElement = document.createElement('div');
+            storyElement.innerHTML = `
+                <h3><a href="${story.url || '#'}" target="_blank">${story.title}</a></h3>
+                <div class="subtext">
+                    ${story.score || 0} points by <a href="#/user/${story.by}">${story.by}</a> 
+                    ${getTimeAgo(story.time)} | ${story.descendants || 0} comments
+                </div>
+                <hr>
+            `;
+            commentsContainer.appendChild(storyElement);
+            
+            // Fetch and render comments
+            if (story.kids && story.kids.length > 0) {
+                const commentPromises = story.kids.map(id => fetchData(`${ITEM_URL}${id}.json`));
+                currentComments = await Promise.all(commentPromises);
+                renderComments(currentComments.filter(c => c && !c.deleted));
+            } else {
+                commentsContainer.innerHTML += '<p>No comments yet.</p>';
+            }
+            
+            loadingElement.style.display = 'none';
+        }
+        
+        // Hide a story
+        function hideStory(storyId) {
+            const storyElement = document.querySelector(`.story a[href="#/item/${storyId}"]`)?.closest('.story');
+            if (storyElement) {
+                storyElement.style.display = 'none';
+            }
+        }
+        
+        // Upvote a story
+        function upvoteStory(storyId, element) {
+            if (!isLoggedIn) {
+                showError("Please login to upvote stories");
+                return;
+            }
+            
+            const storyRow = element.closest('.athing');
+            if (storyRow.classList.contains('upvoted')) {
+                storyRow.classList.remove('upvoted');
+                // In a real app, you would send an API request to remove the upvote
+            } else {
+                storyRow.classList.add('upvoted');
+                // In a real app, you would send an API request to upvote
+                addNotification(`Your upvote was recorded for story #${storyId}`);
+            }
+        }
+        
+        // Toggle save story
+        function toggleSaveStory(storyId, button) {
+            if (!isLoggedIn) {
+                showError("Please login to save stories");
+                return;
+            }
+            
+            const index = savedStories.indexOf(storyId);
+            if (index === -1) {
+                savedStories.push(storyId);
+                button.classList.add('saved');
+                button.textContent = 'saved';
+                addNotification(`Story #${storyId} saved to your profile`);
+            } else {
+                savedStories.splice(index, 1);
+                button.classList.remove('saved');
+                button.textContent = 'save';
+            }
+            
+            localStorage.setItem('savedStories', JSON.stringify(savedStories));
+        }
+        
+        // Toggle bookmark for comments
+        function toggleBookmark(commentId, button) {
+            if (!isLoggedIn) {
+                showError("Please login to bookmark comments");
+                return;
+            }
+            
+            button.classList.toggle('bookmarked');
+            if (button.classList.contains('bookmarked')) {
+                addNotification(`Comment #${commentId} bookmarked`);
+            }
+        }
+        
+        // Show submit form
+        function showSubmitForm() {
+            if (!isLoggedIn) {
+                showError("Please login to submit stories");
+                return;
+            }
+            
+            clearView();
+            document.getElementById('submit-form').style.display = 'block';
+            loadingElement.style.display = 'none';
+        }
+        
+        // Hide submit form
+        function hideSubmitForm() {
+            document.getElementById('submit-form').style.display = 'none';
+            loadTopStories();
+        }
+        
+        // Submit a post
+        function submitPost() {
+            const title = document.getElementById('submit-title').value;
+            const url = document.getElementById('submit-url').value;
+            const text = document.getElementById('submit-text').value;
+            
+            if (!title || (!url && !text)) {
+                showError('Please provide a title and either URL or text');
+                return;
+            }
+            
+            // In a real app, you would submit this to your backend
+            alert(`Post submitted!\nTitle: ${title}\nURL: ${url}\nText: ${text}`);
+            addNotification("Your submission is being processed");
+            hideSubmitForm();
+        }
+        
+        // Show login form
+        function showLoginForm() {
+            if (isLoggedIn) {
+                showError("You are already logged in");
+                return;
+            }
+            
+            clearView();
+            document.getElementById('login-form').style.display = 'block';
+            loadingElement.style.display = 'none';
+        }
+        
+        // Hide login form
+        function hideLoginForm() {
+            document.getElementById('login-form').style.display = 'none';
+            loadTopStories();
+        }
+        
+        // Perform login
+        function performLogin() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            if (!username || !password) {
+                showError('Please enter both username and password');
+                return;
+            }
+            
+            // In a real app, you would authenticate with your backend
+            isLoggedIn = true;
+            localStorage.setItem('isLoggedIn', 'true');
+            document.getElementById('profile-username').textContent = username;
+            document.getElementById('profile-karma').textContent = Math.floor(Math.random() * 1000);
+            document.getElementById('profile-created').textContent = new Date().toLocaleDateString();
+            
+            addNotification(`Welcome back, ${username}!`);
+            hideLoginForm();
+            updateLoginStatus();
+        }
+        
+        // Logout
+        function performLogout() {
+            isLoggedIn = false;
+            localStorage.setItem('isLoggedIn', 'false');
+            updateLoginStatus();
+            addNotification("You have been logged out");
+        }
+        
+        // Update login status in UI
+        function updateLoginStatus() {
+            const loginLinks = document.querySelectorAll('.pagetop a[onclick="showLoginForm()"]');
+            loginLinks.forEach(link => {
+                if (isLoggedIn) {
+                    link.textContent = 'logout';
+                    link.onclick = performLogout;
+                } else {
+                    link.textContent = 'login';
+                    link.onclick = showLoginForm;
+                }
+            });
+        }
+        
+        // Show user profile
+        function showUserProfile() {
+            if (!isLoggedIn) {
+                showLoginForm();
+                return;
+            }
+            
+            document.getElementById('user-profile').style.display = 'block';
+            updateSavedStoriesList();
+        }
+        
+        // Hide user profile
+        function hideUserProfile() {
+            document.getElementById('user-profile').style.display = 'none';
+        }
+        
+        // Update saved stories list in profile
+        async function updateSavedStoriesList() {
+            const savedStoriesList = document.getElementById('saved-stories-list');
+            savedStoriesList.innerHTML = '<p>Loading saved stories...</p>';
+            
+            if (savedStories.length === 0) {
+                savedStoriesList.innerHTML = '<p>No saved stories yet.</p>';
+                return;
+            }
+            
+            // Fetch all saved stories in parallel
+            const storyPromises = savedStories.map(id => fetchData(`${ITEM_URL}${id}.json`));
+            const stories = await Promise.all(storyPromises);
+            
+            // Filter out nulls and invalid stories
+            const validStories = stories.filter(story => story && story.title);
+            
+            savedStoriesList.innerHTML = '';
+            validStories.forEach(story => {
+                const storyElement = document.createElement('div');
+                storyElement.innerHTML = `
+                    <p><a href="${story.url || `#/item/${story.id}`}" target="_blank">${story.title}</a></p>
+                `;
+                savedStoriesList.appendChild(storyElement);
+            });
+        }
+        
+        // Toggle notifications panel
+        function toggleNotifications() {
+            const panel = document.getElementById('notifications-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            
+            if (panel.style.display === 'block') {
+                updateNotificationsList();
+            }
+        }
+        
+        // Add a notification
+        function addNotification(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            notifications.unshift({ message, timestamp });
+            if (notifications.length > 10) {
+                notifications = notifications.slice(0, 10);
+            }
+            localStorage.setItem('notifications', JSON.stringify(notifications));
+            updateNotificationCount();
+        }
+        
+        // Update notification count
+        function updateNotificationCount() {
+            const unreadCount = notifications.length;
+            notificationCount.textContent = unreadCount;
+            notificationCount.style.display = unreadCount > 0 ? 'flex' : 'none';
+        }
+        
+        // Update notifications list
+        function updateNotificationsList() {
+            const list = document.getElementById('notifications-list');
+            list.innerHTML = '';
+            
+            if (notifications.length === 0) {
+                list.innerHTML = '<p>No notifications</p>';
+                return;
+            }
+            
+            notifications.forEach(notification => {
+                const item = document.createElement('div');
+                item.innerHTML = `<p><strong>${notification.timestamp}</strong>: ${notification.message}</p>`;
+                list.appendChild(item);
+            });
+        }
+        
+        // Perform search
+        function performSearch() {
+            const query = searchInput.value.trim();
+            if (!query) return;
+            
+            alert(`Search would be implemented for: ${query}`);
+            addNotification(`Search performed for: ${query}`);
+        }
+        
+        // Toggle dark mode
+        function toggleDarkMode() {
+            darkMode = !darkMode;
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', darkMode.toString());
+            addNotification(`Dark mode ${darkMode ? 'enabled' : 'disabled'}`);
+        }
+        
+        // Footer link functions
+        function loadGuidelines() {
+            addNotification("Loading guidelines...");
+            alert('Loading guidelines page...');
+        }
+        
+        function loadFAQ() {
+            addNotification("Loading FAQ...");
+            alert('Loading FAQ page...');
+        }
+        
+        function loadAPIInfo() {
+            addNotification("Loading API information...");
+            alert('Loading API information...');
+        }
+        
+        function loadSecurityInfo() {
+            addNotification("Loading security information...");
+            alert('Loading security information...');
+        }
+        
+        function loadLegalInfo() {
+            addNotification("Loading legal information...");
+            alert('Loading legal information...');
+        }
+        
+        function loadApplyToYC() {
+            addNotification("Loading YC application...");
+            alert('Loading YC application page...');
+        }
+        
+        function showContactForm() {
+            addNotification("Preparing contact form...");
+            alert('Showing contact form...');
+        }
+        
+        // Calculate time ago from Unix timestamp
+        function getTimeAgo(timestamp) {
+            const seconds = Math.floor((Date.now() / 1000) - timestamp);
+            if (seconds < 60) return `${seconds} seconds ago`;
+            if (seconds < 3600) return `${Math.floor(seconds/60)} minutes ago`;
+            if (seconds < 86400) return `${Math.floor(seconds/3600)} hours ago`;
+            return `${Math.floor(seconds/86400)} days ago`;
+        }
+        
+        // AI Enhancement: Analyze trending topics
+        async function analyzeAndShowTrends() {
+            if (currentStories.length === 0) {
+                showError("No stories to analyze. Please load stories first.");
+                return;
+            }
+            
+            trendingList.innerHTML = "Analyzing...";
+            document.getElementById('trending-box').style.display = 'block';
+            
+            // Simple keyword analysis
+            const techKeywords = [
+                "AI", "Machine Learning", "Python", "JavaScript", "TypeScript",
+                "React", "Vue", "Angular", "Node.js", "Rust", "Go", "Kubernetes",
+                "Docker", "AWS", "Azure", "GCP", "PostgreSQL", "MongoDB", "SQL",
+                "WebAssembly", "Blockchain", "Cryptocurrency", "NFT", "VR", "AR",
+                "Quantum", "Security", "Privacy", "Open Source", "Linux", "Windows",
+                "MacOS", "iOS", "Android", "Flutter", "React Native"
+            ];
+            
+            const keywordCounts = {};
+            techKeywords.forEach(keyword => keywordCounts[keyword] = 0);
+            
+            // Count keyword occurrences in titles
+            currentStories.forEach(story => {
+                techKeywords.forEach(keyword => {
+                    if (story.title.includes(keyword)) {
+                        keywordCounts[keyword]++;
+                    }
+                });
+            });
+            
+            // Convert to array, filter and sort
+            const trendingTopics = Object.entries(keywordCounts)
+                .filter(([_, count]) => count > 0)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+            
+            // Display results
+            if (trendingTopics.length > 0) {
+                trendingList.innerHTML = trendingTopics.map(([topic, count]) => 
+                    `<span class="trending-item">${topic} (${count})</span>`
+                ).join(' ');
+                addNotification("Trending topics analysis complete");
+            } else {
+                trendingList.innerHTML = "No strong trends detected";
+            }
+        }
+        
+        function hideTrending() {
+            document.getElementById('trending-box').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
